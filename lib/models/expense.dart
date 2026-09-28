@@ -120,4 +120,20 @@ class Expense {
       note: note ?? this.note,
     );
   }
+
+  /// The resolved share owed by [memberId], or `0` if they are not a
+  /// participant in this expense.
+  int shareOf(String memberId) {
+    for (final p in participants) {
+      if (p.memberId == memberId) return p.share;
+    }
+    return 0;
+  }
+
+  /// How this expense moves [memberId]'s balance: positive when they are
+  /// owed money (they paid for others), negative when they owe their share.
+  int netImpactFor(String memberId) {
+    final share = shareOf(memberId);
+    return payerId == memberId ? amount - share : -share;
+  }
 }
