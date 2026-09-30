@@ -20,4 +20,11 @@ class Settlement {
   final SettlementDirection direction;
   final DateTime date;
   final String method;
+
+  bool get isYouPaid => direction == SettlementDirection.youPaid;
+
+  /// How this settlement moves the balance with [memberId], using the same
+  /// sign convention as [AppState.netBalanceByMember]: paying them raises
+  /// what they owe you, being paid by them lowers it.
+  int get balanceDelta => isYouPaid ? amount : -amount;
 }
