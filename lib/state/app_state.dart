@@ -102,20 +102,20 @@ class AppState extends ChangeNotifier {
   /// current user owes that member. Combines the expense ledger with any
   /// recorded settlements.
   Map<String, int> get netBalanceByMember {
+    final meId = currentMember.id;
     final net = <String, int>{
       for (final m in _members)
-        if (m.id != currentMember.id) m.id: 0,
+        if (m.id != meId) m.id: 0,
     };
 
     for (final expense in _expenses) {
       for (final participant in expense.participants) {
         if (participant.memberId == expense.payerId) continue;
 
-        if (expense.payerId == currentMember.id &&
-            net.containsKey(participant.memberId)) {
+        if (expense.payerId == meId && net.containsKey(participant.memberId)) {
           net[participant.memberId] =
               net[participant.memberId]! + participant.share;
-        } else if (participant.memberId == currentMember.id &&
+        } else if (participant.memberId == meId &&
             net.containsKey(expense.payerId)) {
           net[expense.payerId] = net[expense.payerId]! - participant.share;
         }
@@ -124,10 +124,8 @@ class AppState extends ChangeNotifier {
 
     for (final settlement in _settlements) {
       if (!net.containsKey(settlement.memberId)) continue;
-      final delta = settlement.direction == SettlementDirection.youPaid
-          ? settlement.amount
-          : -settlement.amount;
-      net[settlement.memberId] = net[settlement.memberId]! + delta;
+      net[settlement.memberId] =
+          net[settlement.memberId]! + settlement.balanceDelta;
     }
 
     return net;
@@ -221,18 +219,8 @@ class AppState extends ChangeNotifier {
 
   ActivityItem _expenseToActivityItem(Expense expense) {
     final payer = memberById(expense.payerId);
-    final isCurrentUserPayer = expense.payerId == currentMember.id;
-    ExpenseParticipant? ownParticipant;
-    for (final p in expense.participants) {
-      if (p.memberId == currentMember.id) {
-        ownParticipant = p;
-        break;
-      }
-    }
-
-    final signedAmount = isCurrentUserPayer
-        ? (expense.amount - (ownParticipant?.share ?? 0))
-        : -(ownParticipant?.share ?? 0);
+    final meId = currentMember.id;
+    final isCurrentUserPayer = expense.payerId == meId;
 
     final subtitle = isCurrentUserPayer
         ? 'You paid ${formatCurrency(expense.amount)}'
@@ -243,7 +231,7 @@ class AppState extends ChangeNotifier {
       type: ActivityType.expense,
       title: expense.description,
       subtitle: subtitle,
-      amount: signedAmount,
+      amount: expense.netImpactFor(meId),
       timestamp: expense.date,
       relatedExpenseId: expense.id,
     );
@@ -251,8 +239,7 @@ class AppState extends ChangeNotifier {
 
   ActivityItem _settlementToActivityItem(Settlement settlement) {
     final member = memberById(settlement.memberId);
-    final isYouPaid = settlement.direction == SettlementDirection.youPaid;
-    final subtitle = isYouPaid
+    final subtitle = settlement.isYouPaid
         ? 'You paid ${member.name} ${formatCurrency(settlement.amount)}'
         : '${member.name} paid you ${formatCurrency(settlement.amount)}';
 
