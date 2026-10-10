@@ -78,6 +78,11 @@ class ExpenseTile extends StatelessWidget {
                   impact > 0
                       ? '+${formatCurrency(impact)}'
                       : '-${formatCurrency(impact.abs())}',
+                  // The sign and colour are the only cue for direction, so
+                  // say it in words for screen readers.
+                  semanticsLabel: impact > 0
+                      ? 'You are owed ${formatCurrency(impact)}'
+                      : 'You owe ${formatCurrency(impact.abs())}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: impact > 0 ? AppColors.primary : AppColors.coral,
                     fontWeight: FontWeight.w700,
