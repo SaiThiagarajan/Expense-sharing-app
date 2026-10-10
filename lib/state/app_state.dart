@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/theme/app_colors.dart';
 import '../core/utils/currency_formatter.dart';
 import '../models/activity.dart';
 import '../models/app_notification.dart';
@@ -61,7 +62,15 @@ class AppState extends ChangeNotifier {
   Member get currentMember =>
       _members.firstWhere((m) => m.id == currentUser.memberId);
 
-  Member memberById(String id) => _members.firstWhere((m) => m.id == id);
+  /// Looks up a member by [id]. Expenses and settlements can outlive a
+  /// member's place in the household (see [createHousehold]), so an unknown
+  /// id resolves to a neutral "Former member" placeholder instead of
+  /// throwing and breaking every screen that renders the ledger.
+  Member memberById(String id) => _members.firstWhere(
+    (m) => m.id == id,
+    orElse: () =>
+        Member(id: id, name: 'Former member', avatarColor: AppColors.mutedText),
+  );
 
   void addMember(Member member) {
     _members = List.of(_members)..add(member);
@@ -74,12 +83,18 @@ class AppState extends ChangeNotifier {
   }
 
   void createHousehold(String name, List<Member> selectedMembers) {
+    // The logged-in user always belongs to their own household; dropping
+    // them would leave [currentMember] with nothing to resolve to.
+    final me = currentMember;
     _householdName = name;
-    _members = List.of(selectedMembers);
+    _members = [
+      if (!selectedMembers.any((m) => m.id == me.id)) me,
+      ...selectedMembers,
+    ];
     _pushNotification(
       type: NotificationType.household,
       title: 'Household ready',
-      subtitle: '"$name" was created with ${selectedMembers.length} members.',
+      subtitle: '"$name" was created with ${_members.length} members.',
     );
     notifyListeners();
   }
