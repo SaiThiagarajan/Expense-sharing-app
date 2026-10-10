@@ -158,6 +158,17 @@ class AppState extends ChangeNotifier {
 
   void addExpense(Expense expense) {
     _expenses.add(expense);
+    final payerName = expense.payerId == currentMember.id
+        ? 'You'
+        : memberById(expense.payerId).name;
+    final ways = expense.participants.length;
+    _pushNotification(
+      type: NotificationType.expenseAdded,
+      title: '$payerName added a new expense',
+      subtitle:
+          '"${expense.description}" · ${formatCurrency(expense.amount)} · '
+          'split $ways ${ways == 1 ? 'way' : 'ways'}',
+    );
     notifyListeners();
   }
 
