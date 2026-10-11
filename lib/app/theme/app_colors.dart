@@ -13,7 +13,9 @@ class AppColors {
   static const Color background = Color(0xFFF4F0E6);
   static const Color surfaceIvory = Color(0xFFFFFDF8);
   static const Color charcoal = Color(0xFF2E2D2B);
-  static const Color mutedText = Color(0xFF7C7865);
+  // Secondary text (captions, labels, hints). Dark enough to meet WCAG AA
+  // 4.5:1 on the background, ivory cards and the soft container tints.
+  static const Color mutedText = Color(0xFF67634F);
 
   // Brand accents
   static const Color primary = Color(0xFF205743);
