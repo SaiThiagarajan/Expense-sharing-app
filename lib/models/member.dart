@@ -25,6 +25,10 @@ class Member {
   }
 
   /// Up to two initials derived from [name], e.g. `Sai` -> `S`.
+  ///
+  /// Uses the first user-perceived character of each word rather than the
+  /// first UTF-16 code unit, so emoji and Indic names (with combining marks)
+  /// don't render as a broken half-glyph in the avatar.
   String get initials {
     final parts = name
         .trim()
@@ -32,8 +36,9 @@ class Member {
         .where((p) => p.isNotEmpty)
         .toList();
     if (parts.isEmpty) return '';
-    if (parts.length == 1) return parts.first[0].toUpperCase();
-    return (parts.first[0] + parts.last[0]).toUpperCase();
+    final first = parts.first.characters.first;
+    if (parts.length == 1) return first.toUpperCase();
+    return (first + parts.last.characters.first).toUpperCase();
   }
 
   @override
