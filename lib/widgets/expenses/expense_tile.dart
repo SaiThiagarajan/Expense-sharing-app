@@ -72,7 +72,14 @@ class ExpenseTile extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               if (impact == 0)
-                Text('Settled', style: theme.textTheme.bodySmall)
+                // A zero impact means either the user paid only their own
+                // share, or they weren't part of this expense at all.
+                Text(
+                  isCurrentUserPayer || expense.shareOf(meId) > 0
+                      ? 'Settled'
+                      : 'Not involved',
+                  style: theme.textTheme.bodySmall,
+                )
               else
                 Text(
                   impact > 0
