@@ -102,7 +102,7 @@ class AppState extends ChangeNotifier {
     _pushNotification(
       type: NotificationType.household,
       title: 'Household ready',
-      subtitle: '"$name" was created with ${_members.length} members.',
+      subtitle: '"$name" was created with ${household.memberCountLabel}.',
     );
     notifyListeners();
   }
