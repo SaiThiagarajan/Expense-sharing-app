@@ -41,12 +41,20 @@ class AppState extends ChangeNotifier {
 
   String get profileEmail => _profileEmail;
 
+  /// Updates the current user's display name and email. Blank values are
+  /// ignored so clearing a field can't leave the user nameless across the
+  /// sidebar, avatars and greetings.
   void updateProfile({required String name, required String email}) {
-    final current = currentMember;
-    _members = [
-      for (final m in _members) m.id == current.id ? m.copyWith(name: name) : m,
-    ];
-    _profileEmail = email;
+    final trimmedName = name.trim();
+    final trimmedEmail = email.trim();
+    if (trimmedName.isNotEmpty) {
+      final current = currentMember;
+      _members = [
+        for (final m in _members)
+          m.id == current.id ? m.copyWith(name: trimmedName) : m,
+      ];
+    }
+    if (trimmedEmail.isNotEmpty) _profileEmail = trimmedEmail;
     notifyListeners();
   }
 
