@@ -196,12 +196,21 @@ class AppState extends ChangeNotifier {
   // Settlements
   // ---------------------------------------------------------------------
 
+  /// Records a settlement with another household member. Non-positive
+  /// amounts, unknown members and the current user themselves are ignored:
+  /// [netBalanceByMember] would never apply them, so recording one would
+  /// only leave a misleading notification and activity entry behind.
   void recordSettlement({
     required String memberId,
     required int amount,
     required SettlementDirection direction,
     String method = 'UPI',
   }) {
+    if (amount <= 0 ||
+        memberId == currentMember.id ||
+        !_members.any((m) => m.id == memberId)) {
+      return;
+    }
     final member = memberById(memberId);
     _settlements.add(
       Settlement(
