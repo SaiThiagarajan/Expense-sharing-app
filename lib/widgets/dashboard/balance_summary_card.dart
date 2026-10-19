@@ -23,7 +23,10 @@ class BalanceSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isPositive = netBalance >= 0;
+    // A zero balance is neither owed nor owing, so it gets its own neutral
+    // "settled" state instead of reading as "You are owed overall ₹0".
+    final isSettled = netBalance == 0;
+    final isPositive = netBalance > 0;
 
     return Container(
       width: double.infinity,
@@ -42,7 +45,9 @@ class BalanceSummaryCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isPositive
+                isSettled
+                    ? Icons.check_circle_outline_rounded
+                    : isPositive
                     ? Icons.trending_up_rounded
                     : Icons.trending_down_rounded,
                 color: AppColors.surfaceIvory.withValues(alpha: 0.85),
@@ -51,7 +56,11 @@ class BalanceSummaryCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Flexible(
                 child: Text(
-                  isPositive ? 'You are owed overall' : 'You owe overall',
+                  isSettled
+                      ? "You're all settled up"
+                      : isPositive
+                      ? 'You are owed overall'
+                      : 'You owe overall',
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.surfaceIvory.withValues(alpha: 0.85),
