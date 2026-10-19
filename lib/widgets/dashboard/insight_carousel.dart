@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_spacing.dart';
+import '../../core/utils/currency_formatter.dart';
+import '../../state/app_state.dart';
 
 class _InsightData {
   const _InsightData({
@@ -17,7 +20,7 @@ class _InsightData {
   final Color color;
 }
 
-const _insights = [
+const _staticInsights = [
   _InsightData(
     icon: Icons.trending_down_rounded,
     title: 'Your group spent 18% less on food this week.',
@@ -31,13 +34,23 @@ const _insights = [
         'Settling smaller balances regularly keeps group expenses simple.',
     color: AppColors.amber,
   ),
-  _InsightData(
+];
+
+/// Builds the "Monthly snapshot" card from the live ledger so it tracks
+/// added, edited and deleted expenses instead of showing a fixed figure.
+_InsightData _monthlySnapshot(AppState appState, DateTime now) {
+  final monthTotal = appState.expenses
+      .where((e) => e.date.year == now.year && e.date.month == now.month)
+      .fold<int>(0, (sum, e) => sum + e.amount);
+  return _InsightData(
     icon: Icons.pie_chart_outline_rounded,
     title: 'Monthly snapshot',
-    subtitle: '₹4,280 shared across 4 members this month.',
+    subtitle:
+        '${formatCurrency(monthTotal)} shared across '
+        '${appState.household.memberCountLabel} this month.',
     color: AppColors.mint,
-  ),
-];
+  );
+}
 
 /// Horizontally swipeable insight/promotional cards on the dashboard —
 /// in-app product tips, never external ads.
@@ -60,6 +73,11 @@ class _InsightCarouselState extends State<InsightCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    final insights = [
+      ..._staticInsights,
+      _monthlySnapshot(context.watch<AppState>(), DateTime.now()),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -67,10 +85,10 @@ class _InsightCarouselState extends State<InsightCarousel> {
           height: 132,
           child: PageView.builder(
             controller: _controller,
-            itemCount: _insights.length,
+            itemCount: insights.length,
             onPageChanged: (i) => setState(() => _page = i),
             itemBuilder: (context, i) {
-              final data = _insights[i];
+              final data = insights[i];
               return Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.sm),
                 child: _InsightCard(data: data),
@@ -82,7 +100,7 @@ class _InsightCarouselState extends State<InsightCarousel> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            for (var i = 0; i < _insights.length; i++)
+            for (var i = 0; i < insights.length; i++)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
